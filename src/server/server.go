@@ -22,6 +22,7 @@ Loop:
 		select {
 		case data = <-c:
 			err = websocket.JSON.Send(ws, *data)
+			//websocket.Message.Send(ws, data.Msg)
 			if err != nil {
 				if !ws.IsClientConn() {
 					log.Printf("transmitter closed\n")
@@ -49,16 +50,16 @@ func receiver(ws *websocket.Conn) {
 	defer ws.Close()
 	//defer close(c)
 	defer cancel()
-	id := ws.Request().Header.Get("X-Client-ID")
+	ws.Request().ParseForm()
+	id := ws.Request().FormValue("id")
 	go transmitter(id, ws, c, ctx, cancel)
 	err := registrar.NewConnection(id, c)
 	if err != nil {
 		fmt.Printf("New Connection Failed - Duplicate CLient Id %s\n", id)
-		ws.Close()
 	} else {
 		for {
 			var data *registrar.T = new(registrar.T)
-			err = websocket.JSON.Receive(ws, data)
+			err := websocket.JSON.Receive(ws, data)
 			if err != nil {
 				log.Printf("echo handler error %v\n", err)
 				break
@@ -72,13 +73,18 @@ func receiver(ws *websocket.Conn) {
 				log.Printf("Routing Error %v - %s\n", err, data.To)
 			}
 		}
-		registrar.RemoveConnection(id)
 	}
+	registrar.RemoveConnection(id)
+
 }
 
 func validateConnectRequest(c *websocket.Config, r *http.Request) error {
-	fmt.Printf("\n\nValidate Connection Request Client-ID- %v \n\n", r.Header.Get("X-Client-ID"))
-	err := registrar.ValidateConnectionRequest(r.Header.Get("X-Client-ID"))
+	r.ParseForm()
+	id := r.FormValue("id")
+	//fmt.Printf("\n\nValidate Connection Request Client-ID- %v \n\n", r.Header.Get("X-Client-ID"))
+	//err := registrar.ValidateConnectionRequest(r.Header.Get("X-Client-ID"))
+	fmt.Printf("\n\nValidate Connection Request Client-ID- %s \n\n", id)
+	err := registrar.ValidateConnectionRequest(id)
 	log.Printf("Validate Connection Returned")
 	if err != nil {
 		log.Printf("Validate Connection Request Error %v\n", err)

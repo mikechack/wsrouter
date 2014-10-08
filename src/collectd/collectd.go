@@ -3,16 +3,18 @@ package main
 import (
 	"code.google.com/p/go.net/context"
 	"code.google.com/p/go.net/websocket"
+	"encoding/base64"
 	//"encoding/json"
 	"fmt"
 	"log"
-	"math/rand"
+	//	"math/rand"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"runtime"
 	"sync"
-	"time"
+	//"time"
 )
 
 type T struct {
@@ -62,6 +64,12 @@ var printLog bool = true
 
 var loopCount int = 0
 
+const (
+	CONN_HOST = "0.0.0.0"
+	CONN_PORT = "3333"
+	CONN_TYPE = "tcp"
+)
+
 func replyWaiter(id int64, c chan int64) {
 	select {
 	case <-c:
@@ -76,14 +84,14 @@ func replyWaiter(id int64, c chan int64) {
 
 }
 
-func reader(ws *websocket.Conn, id string) {
+func reader(ws *websocket.Conn, id string, cancel context.CancelFunc, c chan *T) {
 
 	//var err error
 	for {
 
 		if !ws.IsClientConn() {
 			log.Fatal("No Connection")
-			break
+			cancel()
 		}
 
 		var data *T = new(T)
@@ -91,65 +99,40 @@ func reader(ws *websocket.Conn, id string) {
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		LogConditional(printLog, fmt.Printf, "\nReceived message : %s\n", data.Msg)
-		if data.Reply {
-			if data.From != id {
-				LogConditional(printLog, fmt.Printf, "Need to Reply to %v\n", data.From)
-				data.To = data.From
-				data.From = id
-				data.Reply = false
-				data.Msg = fmt.Sprintf("%s%s", "Back at you ------- ", data.Msg)
-				err := websocket.JSON.Send(ws, *data)
-				if err != nil {
-					log.Fatal(err)
-				}
-			}
-		} else {
-			if R.isWaiting(data.MsgId) {
-				R.Lock()
-				channel := R.waiting[data.MsgId].channel
-				R.Unlock()
-				channel <- data.MsgId
-			}
-		}
+		c <- data
+		//LogConditional(printLog, fmt.Printf, "\nReceived message : %s\n", data.Msg)
 
 	}
 }
 
-func writer(ws *websocket.Conn, me string) {
-	var i int
-	var to string
-	var msg string
+func writer(ws *websocket.Conn, me string, c chan *T) {
+
+	conn, err := net.Dial("tcp", "173.39.210.64:2003")
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
 	for {
 
+		var err error
+		var b []byte
 		if !ws.IsClientConn() {
 			break
 		}
 
-		time.Sleep(100 * time.Millisecond)
-		fmt.Print("\n\nSend To: ")
-		fmt.Scanf("%s", &to)
-		fmt.Print("Message: ")
-		fmt.Scanf("%s", &msg)
-		for i, R.messagesReceived = 0, 0; i < loopCount; i++ {
-			var data *T = new(T)
-			//data.MsgId = time.Now().UnixNano()
-			data.Reply = true
-			data.MsgId = int64(i)
-			data.To = to
-			data.Msg = msg
-			data.From = me
-			r := response{msgId: data.MsgId, channel: make(chan int64)}
-			R.Lock()
-			R.waiting[data.MsgId] = r
-			R.Unlock()
-			go replyWaiter(data.MsgId, r.channel)
-			err := websocket.JSON.Send(ws, data)
-			if err != nil {
-				log.Fatal(err)
-			}
+		pkt := <-c
+		b, err = base64.StdEncoding.DecodeString(pkt.Msg)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		fmt.Printf("Packet received in writer - let's send to Collectd (graphite currently) - %v\n", len(b))
+		_, err = conn.Write(b)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
 		}
 
 	}
@@ -160,20 +143,17 @@ func main() {
 
 	var server string
 
-	runtime.GOMAXPROCS(1)
-	R = *new(responses)
-	R.waiting = make(map[int64]response)
-	rand.Seed(time.Now().UnixNano())
 	var (
-		ctx context.Context
+		ctx    context.Context
+		cancel context.CancelFunc
 	)
 
-	ctx, _ = context.WithCancel(context.Background())
+	ctx, cancel = context.WithCancel(context.Background())
+
+	runtime.GOMAXPROCS(1)
 
 	server = os.Args[1]
 	id := os.Args[2]
-	printLog = (os.Args[3] == "1")
-	fmt.Sscanf(os.Args[4], "%d", &loopCount)
 
 	LogConditional(printLog, fmt.Printf, "Client Id %s\n", id)
 	//fmt.Printf("Client Id %s\n", id)
@@ -194,8 +174,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	go writer(ws, id)
-	go reader(ws, id)
+	c := make(chan *T)
+	go writer(ws, id, c)
+	go reader(ws, id, cancel, c)
 
 	select {
 	case <-ctx.Done():

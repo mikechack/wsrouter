@@ -3,10 +3,12 @@ package main
 import (
 	"code.google.com/p/go.net/context"
 	"code.google.com/p/go.net/websocket"
+	"encoding/base64"
 	//"encoding/json"
 	"fmt"
 	"log"
-	"math/rand"
+	//	"math/rand"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -117,10 +119,7 @@ func reader(ws *websocket.Conn, id string) {
 	}
 }
 
-func writer(ws *websocket.Conn, me string) {
-	var i int
-	var to string
-	var msg string
+func writer(ws *websocket.Conn, me string, c chan []byte) {
 
 	for {
 
@@ -128,52 +127,124 @@ func writer(ws *websocket.Conn, me string) {
 			break
 		}
 
-		time.Sleep(100 * time.Millisecond)
-		fmt.Print("\n\nSend To: ")
-		fmt.Scanf("%s", &to)
-		fmt.Print("Message: ")
-		fmt.Scanf("%s", &msg)
-		for i, R.messagesReceived = 0, 0; i < loopCount; i++ {
-			var data *T = new(T)
-			//data.MsgId = time.Now().UnixNano()
-			data.Reply = true
-			data.MsgId = int64(i)
-			data.To = to
-			data.Msg = msg
-			data.From = me
-			r := response{msgId: data.MsgId, channel: make(chan int64)}
-			R.Lock()
-			R.waiting[data.MsgId] = r
-			R.Unlock()
-			go replyWaiter(data.MsgId, r.channel)
-			err := websocket.JSON.Send(ws, data)
-			if err != nil {
-				log.Fatal(err)
-			}
+		b := <-c
+		msg := base64.StdEncoding.EncodeToString(b)
+		fmt.Printf("Packet received in writer - length %v\n", len(b))
+		//fmt.Println(msg)
+
+		var data *T = new(T)
+		data.MsgId = time.Now().UnixNano()
+		data.Reply = false
+		data.To = "collectd"
+		data.Msg = msg
+		data.From = me
+		err := websocket.JSON.Send(ws, data)
+		if err != nil {
+			log.Fatal(err)
 		}
 
 	}
 
 }
 
+const (
+	CONN_HOST = "0.0.0.0"
+	CONN_PORT = "3333"
+	CONN_TYPE = "tcp"
+)
+
+func collectSyslog(c chan []byte) {
+	var buf [1024]byte
+	addr, err := net.ResolveUDPAddr("udp", "0.0.0.0:5555")
+	if err != nil {
+		fmt.Println("Error resolve address:", err.Error())
+		os.Exit(1)
+	}
+	sock, err := net.ListenUDP("udp", addr)
+	if err != nil {
+		fmt.Println("Error listening:", err.Error())
+		os.Exit(1)
+	}
+	for {
+		rlen, _, _ := sock.ReadFromUDP(buf[:])
+		fmt.Printf("Got Syslog Message\n%s\n", buf[0:rlen])
+	}
+}
+
+func collectdTcp(cancel context.CancelFunc, c chan []byte) {
+	// Listen for incoming connections.
+	l, err := net.Listen(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
+	if err != nil {
+		fmt.Println("Error listening:", err.Error())
+		os.Exit(1)
+	}
+	// Close the listener when the application closes.
+	defer l.Close()
+	fmt.Println("Listening on " + CONN_HOST + ":" + CONN_PORT)
+	for {
+		// Listen for an incoming connection.
+		conn, err := l.Accept()
+		if err != nil {
+			fmt.Println("Error accepting: ", err.Error())
+			os.Exit(1)
+		}
+		// Handle connections in a new goroutine.
+		go handleRequest(conn, cancel, c)
+	}
+}
+
+// Handles incoming requests.
+func handleRequest(conn net.Conn, cancel context.CancelFunc, c chan []byte) {
+	// Make a buffer to hold incoming data.
+	// Read the incoming connection into the buffer.
+	for {
+		buf := make([]byte, 1500)
+		n, err := conn.Read(buf[0:])
+		if err != nil {
+			fmt.Println("Error reading:", err.Error())
+			cancel()
+		}
+		fmt.Printf("Packet received - buf address %v", &buf[0])
+		c <- buf[0:n]
+	}
+}
+
+func collectd(ctx context.Context) {
+
+	laddr, err := net.ResolveUDPAddr("udp", "0.0.0.0:3333")
+	if err != nil {
+		log.Fatalln("fatal: failed to resolve address", err)
+	}
+	conn, err := net.ListenUDP("udp", laddr)
+	if err != nil {
+		log.Fatalln("fatal: failed to listen", err)
+	}
+	for {
+		buf := make([]byte, 1452)
+		n, err := conn.Read(buf[:])
+		if err != nil {
+			log.Println("error: Failed to recieve packet", err)
+		} else {
+			log.Println("Received packet - length", n)
+		}
+	}
+}
+
 func main() {
 
 	var server string
 
-	runtime.GOMAXPROCS(1)
-	R = *new(responses)
-	R.waiting = make(map[int64]response)
-	rand.Seed(time.Now().UnixNano())
 	var (
-		ctx context.Context
+		ctx    context.Context
+		cancel context.CancelFunc
 	)
 
-	ctx, _ = context.WithCancel(context.Background())
+	ctx, cancel = context.WithCancel(context.Background())
+
+	runtime.GOMAXPROCS(1)
 
 	server = os.Args[1]
 	id := os.Args[2]
-	printLog = (os.Args[3] == "1")
-	fmt.Sscanf(os.Args[4], "%d", &loopCount)
 
 	LogConditional(printLog, fmt.Printf, "Client Id %s\n", id)
 	//fmt.Printf("Client Id %s\n", id)
@@ -194,8 +265,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	go writer(ws, id)
-	go reader(ws, id)
+	c := make(chan []byte)
+
+	go collectdTcp(cancel, c)
+	go collectSyslog(c)
+	go writer(ws, id, c)
+	//go reader(ws, id)
 
 	select {
 	case <-ctx.Done():
