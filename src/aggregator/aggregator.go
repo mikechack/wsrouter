@@ -202,7 +202,9 @@ func handleRequest(conn net.Conn, cancel context.CancelFunc, c chan []byte) {
 		n, err := conn.Read(buf[0:])
 		if err != nil {
 			fmt.Println("Error reading:", err.Error())
-			cancel()
+			//cancel()
+			conn.Close()
+			break
 		}
 		fmt.Printf("Packet received - buf address %v", &buf[0])
 		c <- buf[0:n]
