@@ -71,7 +71,7 @@ func getMachineAccount(token string) {
 	req, _ := http.NewRequest("POST", "https://identitybts.webex.com/organization/81ba207e-c4a4-4f64-b8b8-a135dc2a96e5/v1/Machines/", nil)
 	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Content-Type", "application/json")
-	req.Body = nopCloser{bytes.NewBufferString("{\"name\":\"DMC1234\"}")}
+	req.Body = nopCloser{bytes.NewBufferString("{\"name\":\"DMC1234567\", \"password\":\"+u_D{sZNW771ShE)28o>4f#so|3;z5FL\",\"entitlements\":[\"mm-fusion\"]}")}
 	res, err := client.Do(req)
 	if err != nil {
 		log.Fatal(err)
@@ -129,7 +129,7 @@ func getOauthToken(code string) {
 	req, _ := http.NewRequest("POST", "https://idbrokerbts.webex.com/idb/oauth2/v1/access_token", nil)
 	req.Header.Set("Authorization", creds.getAuthorization())
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Body = nopCloser{bytes.NewBufferString("grant_type=authorization_code&redirect_uri=https%3A%2F%2Fmm.fusion.cisco.com&code=" + code)}
+	req.Body = nopCloser{bytes.NewBufferString("grant_type=authorization_code&redirect_uri=https%3A%2F%2Fmm.fusion.cisco.com/token&code=" + code)}
 	res, err := client.Do(req)
 	if err != nil {
 		log.Fatal(err)
@@ -182,10 +182,10 @@ func httpListener(c chan bool) {
 
 func main() {
 
-	var creds = oauthCredentials{clientId, clientSecret}
-	fmt.Printf("auth = %s", creds.getAuthorization())
+	//var creds = oauthCredentials{clientId, clientSecret}
+	//fmt.Printf("auth = %s", creds.getAuthorization())
 	http.Handle("/login/", http.HandlerFunc(loginPage))
-	http.Handle("/", http.HandlerFunc(authCode))
+	http.Handle("/token", http.HandlerFunc(authCode))
 	fmt.Printf("Number of logical CPUs %x\n", runtime.NumCPU())
 	chan1 := make(chan bool)
 	go httpListener(chan1)
