@@ -17,7 +17,7 @@ var clientSecret = "afcbada66b8267da73884671bbb9814718d8f9c6f06896c0dc6fbf1a2a72
 
 var redirectUri = url.QueryEscape("https://mm.fusion.cisco.com")
 var scopes = "mm-fusion:device_provisioning mm-fusion:device_connect"
-var ciUri = url.QueryEscape("https://idbrokerbts.webex.com/idb/oauth2/v1/authorize")
+var ciUri = "https://idbrokerbts.webex.com/idb/oauth2/v1/authorize?response_type=code&client_id=C3268da01375c2f2579c608dd1fd0b34316e8581cfd5eb1b75dcf057f055590dc&redirect_uri=https%3A%2F%2Fmm.fusion.cisco.com/token&scope=mm-fusion%3Adevice_provision%20mm-fusion%3Adevice_connect%20Identity%3ASCIM%20Identity%3AConfig%20Identity%3AOrganization&state=random_string"
 
 type MachineAccount struct {
 	Name     string `json:"name,omitempty"`
@@ -91,7 +91,8 @@ func connect(r *http.Request) {
 	n, _ := r.Body.Read(buf)
 	var machine = MachineAccount{}
 	json.Unmarshal(buf[0:n], &machine)
-	oauth.GetBearerTokenForMachineAccount(machine)
+	bearerToken := oauth.GetBearerTokenForMachineAccount(machine)
+	oauth.GetTokenForMachineAccount(bearerToken)
 }
 
 func Connect(w http.ResponseWriter, r *http.Request) {

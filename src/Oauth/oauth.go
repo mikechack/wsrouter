@@ -71,7 +71,7 @@ func getMachineAccount(token string) {
 	req, _ := http.NewRequest("POST", "https://identitybts.webex.com/organization/81ba207e-c4a4-4f64-b8b8-a135dc2a96e5/v1/Machines/", nil)
 	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Content-Type", "application/json")
-	req.Body = nopCloser{bytes.NewBufferString("{\"name\":\"DMC1234567\", \"password\":\"+u_D{sZNW771ShE)28o>4f#so|3;z5FL\",\"entitlements\":[\"mm-fusion\"]}")}
+	req.Body = nopCloser{bytes.NewBufferString("{\"name\":\"DMC12345678\", \"password\":\"+u_D{sZNW771ShE)28o>4f#so|3;z5FL\",\"entitlements\":[\"mm-fusion\"]}")}
 	res, err := client.Do(req)
 	if err != nil {
 		log.Fatal(err)
