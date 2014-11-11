@@ -141,7 +141,7 @@ func GetTokenForMachineAccount(bearer string) string {
 	v.Add("assertion", bearer)
 	v.Add("client_id", clientId)
 	v.Add("client_secret", clientSecret)
-	v.Add("scope", "squared-fusion-mngmt:management squared-fusion-media:device_connect Identity:Config")
+	v.Add("scope", "squared-fusion-mgmnt:management squared-fusion-media:device_connect")
 	req.Body = nopCloser{bytes.NewBufferString(v.Encode())}
 
 	res, err := client.Do(req)
@@ -150,11 +150,13 @@ func GetTokenForMachineAccount(bearer string) string {
 	}
 	var token = TokenResponse{}
 	body, err := ioutil.ReadAll(res.Body)
+
+	log.Printf("Token for Machine Response Code      %s\n", res.Status)
+	log.Printf("Token for Machine Response        %s\n", body)
 	if err = json.Unmarshal(body, &token); err != nil {
 		log.Fatal(err)
 	}
 
-	log.Printf("Token for Machine Response Code      %s\n", res.Status)
 	log.Printf("Token for Machine Here is the token  %s\n", token.Access_token)
 	res.Body.Close()
 

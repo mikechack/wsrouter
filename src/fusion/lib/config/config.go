@@ -187,6 +187,7 @@ func Token(w http.ResponseWriter, r *http.Request) {
 		machine = ma
 		bearerToken = oauth.GetBearerTokenForMachineAccount(machine)
 		token = oauth.GetTokenForMachineAccount(bearerToken)
+		fmsRegisterDevice(token)
 
 	} else {
 		w.WriteHeader(http.StatusMethodNotAllowed)
