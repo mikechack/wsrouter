@@ -188,6 +188,7 @@ func Token(w http.ResponseWriter, r *http.Request) {
 		bearerToken = oauth.GetBearerTokenForMachineAccount(machine)
 		token = oauth.GetTokenForMachineAccount(bearerToken)
 		fmsRegisterDevice(token)
+		//http.Redirect(w, r, "https://int-admin.wbx2.com/#/login", 302)
 
 	} else {
 		w.WriteHeader(http.StatusMethodNotAllowed)

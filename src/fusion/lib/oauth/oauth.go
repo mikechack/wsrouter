@@ -141,7 +141,7 @@ func GetTokenForMachineAccount(bearer string) string {
 	v.Add("assertion", bearer)
 	v.Add("client_id", clientId)
 	v.Add("client_secret", clientSecret)
-	v.Add("scope", "squared-fusion-mgmnt:management squared-fusion-media:device_connect")
+	v.Add("scope", "squared-fusion-mgmt:management squared-fusion-media:device_connect Identity:SCIM Identity:Organization")
 	req.Body = nopCloser{bytes.NewBufferString(v.Encode())}
 
 	res, err := client.Do(req)
