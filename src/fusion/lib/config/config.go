@@ -233,7 +233,7 @@ func LogMeOn(w http.ResponseWriter, r *http.Request) {
 	finalRedirect := oauth.EncryptPKCS1v15([]byte(uri))
 	//http.Redirect(w, r, "https://idbroker.webex.com/idb/oauth2/v1/authorize?response_type=code&client_id=C7d339ab61565beedbe4e76645ac530fde0e70a5a3ea2dc45676db8565904dd76&redirect_uri=https%3A%2F%2Fstratos.cisco.com%2Ftoken&scope=webexsquare%3Aget_conversation%20Identity%3ASCIM&state=random_string", 302)
 	//http.Redirect(w, r, "https://idbroker.webex.com/idb/oauth2/v1/authorize?response_type=token&client_id=C0cd283dc5b7d8bd5929a825324c74b4d2755d14cf52eb4b256f9a63bec15fce8&redirect_uri=https%3A%2F%2Fhercules.hitest.huron-dev.com%2Ffuse_redirect&scope=Identity%3ASCIM%20Identity%3AOrganization&state="+finalRedirect, 302)
-	http.Redirect(w, r, "https://idbroker.webex.com/idb/oauth2/v1/authorize?response_type=token&client_id=C0cd283dc5b7d8bd5929a825324c74b4d2755d14cf52eb4b256f9a63bec15fce8&redirect_uri=https%3A%2F%2Fhercules.ladidadi.org%2Ffuse_redirect&scope=Identity%3ASCIM%20Identity%3AOrganization&state="+finalRedirect, 302)
+	http.Redirect(w, r, "https://idbroker.webex.com/idb/oauth2/v1/authorize?response_type=token&client_id=C0cd283dc5b7d8bd5929a825324c74b4d2755d14cf52eb4b256f9a63bec15fce8&redirect_uri=https%3A%2F%2Fhercules.ladidadi.org%2Ffuse_redirect&scope=Identity%3ASCIM%20Identity%3AOrganization%20squared-fusion-mgmt%3Amanagement%20squared-fusion-media%3Amanagement&state="+finalRedirect, 302)
 
 }
 

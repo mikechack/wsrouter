@@ -24,6 +24,8 @@ type RegisterRequest struct {
 	Token           string `json:"token,omitempty"`
 }
 
+var version string
+
 var cert tls.Certificate
 var exchangeName = "mediafusion"
 var connection *amqp.Connection
@@ -103,6 +105,7 @@ func httpListener(port string) {
 
 func main() {
 	var err error
+	fmt.Println("Version: ", version)
 	defer connection.Close()
 	//http.Handle("/register", http.HandlerFunc(Register))
 	//go httpListener("8080")

@@ -1,0 +1,24 @@
+mode: set
+github.com/MediaFusion/mf-connector/models/Status.go:11.38,15.2 3 0
+github.com/MediaFusion/mf-connector/models/Status.go:19.22,21.2 1 1
+github.com/MediaFusion/mf-connector/models/get_machine_account.go:28.63,31.2 2 0
+github.com/MediaFusion/mf-connector/models/get_machine_account.go:33.74,55.16 15 0
+github.com/MediaFusion/mf-connector/models/get_machine_account.go:58.2,59.16 2 0
+github.com/MediaFusion/mf-connector/models/get_machine_account.go:63.2,67.49 4 0
+github.com/MediaFusion/mf-connector/models/get_machine_account.go:71.2,89.11 15 0
+github.com/MediaFusion/mf-connector/models/get_machine_account.go:55.16,57.3 1 0
+github.com/MediaFusion/mf-connector/models/get_machine_account.go:59.16,61.3 1 0
+github.com/MediaFusion/mf-connector/models/get_machine_account.go:67.49,69.3 1 0
+github.com/MediaFusion/mf-connector/models/redirect_uri.go:15.39,19.2 3 0
+github.com/MediaFusion/mf-connector/models/redirect_uri.go:28.44,32.2 3 0
+github.com/MediaFusion/mf-connector/models/redirect_uri.go:34.82,48.2 12 0
+github.com/MediaFusion/mf-connector/models/redirect_uri.go:50.45,53.2 2 0
+github.com/MediaFusion/mf-connector/models/redirect_uri.go:59.30,73.2 11 0
+github.com/MediaFusion/mf-connector/models/redirect_uri.go:75.77,89.2 9 0
+github.com/MediaFusion/mf-connector/models/session.go:27.48,37.2 6 0
+github.com/MediaFusion/mf-connector/models/session.go:39.36,43.9 2 0
+github.com/MediaFusion/mf-connector/models/session.go:44.2,45.17 1 0
+github.com/MediaFusion/mf-connector/models/session.go:49.46,53.2 1 0
+github.com/MediaFusion/mf-connector/models/session.go:55.71,62.2 6 0
+github.com/MediaFusion/mf-connector/models/session.go:64.13,70.16 4 1
+github.com/MediaFusion/mf-connector/models/session.go:70.16,72.3 1 0
